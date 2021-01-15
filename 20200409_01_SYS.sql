@@ -1,0 +1,9 @@
+--○ 계정 생성
+CREATE USER TEAM2 IDENTIFIED BY team2$admin;
+--==>> User TEAM2이(가) 생성되었습니다.
+
+--○ 권한 부여
+GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE, CREATE VIEW TO TEAM2;
+--==>> Grant을(를) 성공했습니다.
+
+GRANT CREATE PROCEDURE TO TEAM2;

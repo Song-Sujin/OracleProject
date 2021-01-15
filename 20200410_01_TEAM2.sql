@@ -1,0 +1,704 @@
+-- 기능 구현
+
+-- 강의 진행 여부 판별 기능 : 김태균
+CREATE OR REPLACE FUNCTION OS_ING
+(
+  OS_START IN TBL_OPEN_SUB.OPSUB_START%TYPE
+, OS_END IN TBL_OPEN_SUB.OPSUB_END%TYPE
+)
+RETURN VARCHAR2
+IS
+    SD TBL_OPEN_SUB.OPSUB_START%TYPE;
+BEGIN
+    SELECT SYSDATE INTO SD
+    FROM DUAL;
+    
+    IF(OS_START <= SD AND OS_END >= SD)
+        THEN RETURN '강의 중';
+    ELSIF(OS_START > SD)
+        THEN RETURN '강의 예정';
+    ELSIF(OS_END < SD)
+        THEN RETURN '강의 종료';
+    END IF;
+    
+    RETURN '모름';
+END;
+
+
+
+-- 성적 총점 연산 FUCTION : 강수경
+CREATE OR REPLACE FUNCTION SCORE_TOT
+( V_SCO_ATD IN TBL_SCORE.SCO_ATD%TYPE
+, V_SCO_PRC IN TBL_SCORE.SCO_PRC%TYPE
+, V_SCO_WRT IN TBL_SCORE.SCO_WRT%TYPE
+)
+RETURN NUMBER
+IS
+    V_TOT   NUMBER;
+BEGIN
+    V_TOT := V_SCO_ATD + V_SCO_PRC + V_SCO_WRT;
+    
+    RETURN V_TOT;
+END;
+--==>> Function SCORE_TOT이(가) 컴파일되었습니다.
+
+
+
+--------------------------------------------------------------------------------------
+-- 정적 테이블 INSERT 프로시저
+
+
+-- 과정INSERT 프로시저 : 송수진
+CREATE OR REPLACE PROCEDURE PRC_CRS_INSERT
+( V_CRS_NAME    IN TBL_COURSE.CRS_NAME%TYPE
+)
+IS
+BEGIN
+    INSERT INTO TBL_COURSE(CRS_CD, CRS_NAME)
+    VALUES('CR' || LPAD(SEQ_COURSE.NEXTVAL, 3, 0), V_CRS_NAME);
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_CRS_INSERT이(가) 컴파일되었습니다.
+
+-- 과목INSERT 프로시저 : 주한별
+CREATE OR REPLACE PROCEDURE PRC_SUBJECT_INSERT
+( V_SUB_NAME IN TBL_SUBJECT.SUB_NAME%TYPE
+)
+IS
+BEGIN
+
+    INSERT INTO TBL_SUBJECT(SUB_CD, SUB_NAME) 
+    VALUES ('SB' || LPAD(SEQ_SUBJECT.NEXTVAL, 3, 0), V_SUB_NAME);
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_SUBJECT_INSERT이(가) 컴파일되었습니다.
+
+
+-- 강의실 INSERT 프로시저 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_CLS_INSERT
+( V_CLS_INFO    IN TBL_CLASS.CLS_INFO%TYPE)
+IS
+BEGIN
+    INSERT INTO TBL_CLASS(CLS_CD, CLS_INFO)
+    VALUES('CL' || LPAD(SEQ_CLASS.NEXTVAL, 3, 0), V_CLS_INFO);
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_CLS_INSERT이(가) 컴파일되었습니다.
+
+-- 교재 INSERT 프로시저 : 정민화
+CREATE OR REPLACE PROCEDURE PRC_BK_INSERT
+( V_BK_TITLE IN TBL_BOOK.BK_TITLE%TYPE
+, V_BK_INFO IN TBL_BOOK.BK_INFO%TYPE
+)
+IS
+BEGIN
+    INSERT INTO TBL_BOOK(BK_CD, BK_TITLE, BK_INFO) 
+    VALUES ('BK' || LPAD(SEQ_BOOK.NEXTVAL, 3, 0), V_BK_TITLE, V_BK_INFO);
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_BK_INSERT이(가) 컴파일되었습니다.
+
+
+-- 교수자 INSERT 프로시저 : 김태균
+CREATE OR REPLACE PROCEDURE PRC_PRO_INSERT
+( I_ID IN TBL_PROFESSOR.PRO_ID%TYPE
+, I_NAME IN TBL_PROFESSOR.PRO_NAME%TYPE
+, I_SSN IN TBL_PROFESSOR.PRO_SSN%TYPE)
+IS
+BEGIN
+    INSERT INTO TBL_PROFESSOR (PRO_ID, PRO_NAME, PRO_PW, PRO_SSN)
+    VALUES('P' || LPAD(SEQ_PROFESSOR.NEXTVAL, 3, 0), I_NAME, I_SSN, I_SSN);
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_PRO_INSERT이(가) 컴파일되었습니다.
+
+-- 학생 INSERT 프로시저 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_STU_INSERT
+( V_STU_ID IN TBL_STUDENT.STU_ID%TYPE
+, V_STU_NAME IN TBL_STUDENT.STU_NAME%TYPE
+, V_STU_SSN IN TBL_STUDENT.STU_SSN%TYPE)
+IS
+BEGIN
+    INSERT INTO TBL_STUDENT(STU_ID, STU_NAME, STU_PW, STU_SSN)
+    VALUES('S' || TO_CHAR(SYSDATE, 'YYYY') || LPAD(SEQ_STUDENT.NEXTVAL, 5, 0), V_STU_NAME, V_STU_SSN, V_STU_SSN);
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_STU_INSERT이(가) 컴파일되었습니다.
+
+
+------------------------------------------------------------------------------------------------------
+-- 정적 테이블 UPDATE 프로시저
+
+-- 과정 UPDATE 프로시저 : 송수진
+CREATE OR REPLACE PROCEDURE PRC_CRS_UPDATE
+( V_CRS_NAME_BF    IN TBL_COURSE.CRS_NAME%TYPE
+, V_CRS_NAME_AF    IN TBL_COURSE.CRS_NAME%TYPE
+)
+IS
+BEGIN
+    
+    UPDATE TBL_COURSE
+    SET CRS_NAME = V_CRS_NAME_AF
+    WHERE CRS_NAME = V_CRS_NAME_BF;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_CRS_UPDATE이(가) 컴파일되었습니다.
+
+-- 강의실 UPDATE 프로시저 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_CLS_UPDATE
+( V_CLS_INFO_BF      IN TBL_CLASS.CLS_INFO%TYPE
+, V_CLS_INFO_AF      IN TBL_CLASS.CLS_INFO%TYPE)
+IS
+BEGIN
+    UPDATE TBL_CLASS
+    SET   CLS_INFO = V_CLS_INFO_AF
+    WHERE CLS_CD = V_CLS_INFO_BF;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_CLS_UPDATE이(가) 컴파일되었습니다.
+
+
+
+--교수 정보 변경 (관리자가 이름변경) : 김태균
+CREATE OR REPLACE PROCEDURE PRC_PRO_UPNAME
+( I_ID IN TBL_PROFESSOR.PRO_ID%TYPE
+, I_NAME IN TBL_PROFESSOR.PRO_NAME%TYPE)
+IS
+BEGIN
+    UPDATE TBL_PROFESSOR
+    SET PRO_NAME = I_NAME
+    WHERE PRO_ID = I_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_PRO_UPNAME이(가) 컴파일되었습니다.
+
+
+--교수 비밀번호 초기화 (관리자가 비번 초기화) : 김태균
+CREATE OR REPLACE PROCEDURE PRC_PRO_RESET
+(I_ID IN TBL_PROFESSOR.PRO_ID%TYPE)
+IS
+BEGIN
+    UPDATE TBL_PROFESSOR
+    SET PRO_PW = PRO_SSN
+    WHERE PRO_ID = I_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_PRO_RESET이(가) 컴파일되었습니다.
+
+--교수 비밀번호 수정 (교수가 비번변경) : 김태균
+CREATE OR REPLACE PROCEDURE PRC_PRO_UPPW
+(I_ID IN TBL_PROFESSOR.PRO_ID%TYPE
+, I_PASS IN TBL_PROFESSOR.PRO_PW%TYPE)
+IS
+BEGIN
+    UPDATE TBL_PROFESSOR
+    SET PRO_PW = I_PASS
+    WHERE PRO_ID = I_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_PRO_UPPW이(가) 컴파일되었습니다.
+
+
+-- 과목 UPDATE 프로시저 : 주한별
+CREATE OR REPLACE PROCEDURE PRC_SUBJECT_UPDATE
+( V_SUB_NAME_BF IN TBL_SUBJECT.SUB_NAME%TYPE
+ ,V_SUB_NAME_AF IN TBL_SUBJECT.SUB_NAME%TYPE
+)
+IS
+BEGIN
+    UPDATE TBL_SUBJECT
+    SET   SUB_NAME = V_SUB_NAME_AF
+    WHERE SUB_NAME = V_SUB_NAME_BF;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_SUBJECT_UPDATE이(가) 컴파일되었습니다.
+
+
+-- 교재 UPDATE : 정민화
+
+CREATE OR REPLACE PROCEDURE PRC_BK_UPDATE
+( V_BK_CD       IN TBL_BOOK.BK_CD%TYPE      -- EXEC 입력된 변경할 교재코드
+, V_BK_TITLE    IN TBL_BOOK.BK_TITLE%TYPE   -- EXEC 입력된 변경될 교재명
+, V_BK_INFO     IN TBL_BOOK.BK_INFO%TYPE    -- EXEC 입력된 변경될 교재정보
+)
+IS
+    USER_DEFINE_ERROR  EXCEPTION;          -- 예외 입력(교재코드가 매칭되지 않을 경우)
+BEGIN
+    -- 변경될 교재정보는 입력하지 않았으면 (변경할 교재코드, 변경될 교재명)
+    IF (V_BK_INFO IS NULL AND V_BK_TITLE IS NOT NULL AND V_BK_INFO IS NOT NULL)
+        THEN
+        -- 교재명만 변경
+        UPDATE TBL_BOOK             -- 교재 테이블의
+        SET BK_TITLE=V_BK_TITLE   -- 기존 교재명을 새로운 교재명으로 변경
+        WHERE BK_CD=V_BK_CD;        -- 교재코드가 변경할 교재코드와 같은 경우
+    
+    -- 변경될 교재명은 입력하지 않았으면 (변경할 교재코드, 변경될 교재정보)
+    ELSIF (V_BK_TITLE IS NULL AND V_BK_TITLE IS NOT NULL)
+        THEN
+        -- 교재정보만 변경
+        UPDATE TBL_BOOK             -- 교재 테이블의
+        SET BK_INFO=V_BK_INFO       -- 기존 교재정보를 새로운 교재정보로 변경
+        WHERE BK_CD=V_BK_CD;        -- 교재코드가 변경할 교재코드와 같은 경우
+    
+    -- 교재명과 교재정보 모두 입력했을 경우(변경할 교재코드, 변경될 교재명, 변경될 교재정보)
+    ELSE
+        -- 모두 변경
+        UPDATE TBL_BOOK                                 -- 교재 테이블의
+        SET BK_TITLE=V_BK_TITLE, BK_INFO=V_BK_INFO    -- 기존 교재명을 새로운 교재명으로 변경, 기존 교재정보를 새로운 교재정보로 변경
+        WHERE BK_CD=V_BK_CD;                            -- 교재코드가 변경할 교재코드와 같은 경우
+    END IF;
+    
+    COMMIT;
+    
+    -- 예외 처리
+    EXCEPTION
+        WHEN USER_DEFINE_ERROR 
+            THEN RAISE_APPLICATION_ERROR(-20005, 'ERROR : 일치하는 교재코드가 존재하지 않습니다.');
+        WHEN OTHERS
+            THEN ROLLBACK;
+END;
+--==>> Procedure PRC_BK_UPDATE이(가) 컴파일되었습니다.
+
+
+
+-- 학생 이름 변경 (관리자가 이름만 변경) : 강수경
+CREATE OR REPLACE PROCEDURE PRC_STU_UPNAME
+( V_STU_NAME IN TBL_STUDENT.STU_NAME%TYPE
+, V_STU_ID   IN TBL_STUDENT.STU_ID%TYPE)
+IS
+BEGIN 
+    UPDATE TBL_STUDENT
+    SET STU_NAME = V_STU_NAME
+    WHERE STU_ID = V_STU_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_STU_UPNAME이(가) 컴파일되었습니다.
+
+
+-- 학생 비밀번호 변경 (학생) : 강수경
+CREATE OR REPLACE PROCEDURE PRC_STU_UPPW
+( V_STU_ID   IN TBL_STUDENT.STU_ID%TYPE
+, V_STU_PW   IN TBL_STUDENT.STU_PW%TYPE)
+IS
+BEGIN 
+    UPDATE TBL_STUDENT
+    SET STU_PW = V_STU_PW
+    WHERE STU_ID = V_STU_ID;
+    
+    COMMIT;
+
+END;
+--==>> Procedure PRC_STU_UPPW이(가) 컴파일되었습니다.
+
+
+-- 학생 비밀번호 초기화 (관리자) : 강수경
+CREATE OR REPLACE PROCEDURE PRC_STU_RESET
+( V_STU_ID  IN TBL_STUDENT.STU_ID%TYPE)
+IS
+BEGIN
+    UPDATE TBL_STUDENT
+    SET STU_PW = STU_SSN
+    WHERE STU_ID = V_STU_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_STU_RESET이(가) 컴파일되었습니다.
+
+------------------------------------------------------------------------------------------------------
+-- 정적 테이블 DELETE 프로시저
+
+-- 교수 정보 삭제 : 김태균
+CREATE OR REPLACE PROCEDURE PRC_PRO_DELETE
+(I_ID IN TBL_PROFESSOR.PRO_ID%TYPE)
+IS
+BEGIN
+    DELETE
+    FROM TBL_PROFESSOR
+    WHERE PRO_ID = I_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_PRO_DELETE이(가) 컴파일되었습니다.
+
+-- 학생 정보 삭제 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_STU_DELETE
+( V_STU_ID IN TBL_STUDENT.STU_ID%TYPE
+)
+IS
+BEGIN
+    DELETE
+    FROM TBL_STUDENT
+    WHERE STU_ID = V_STU_ID;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_STU_DELETE이(가) 컴파일되었습니다.
+
+
+-- 과목 DELETE 프로시저 : 주한별
+CREATE OR REPLACE PROCEDURE PRC_SUB_DELETE
+( V_SUB_NAME IN TBL_SUBJECT.SUB_CD%TYPE
+)
+IS
+BEGIN
+    DELETE
+    FROM TBL_SUBJECT
+    WHERE SUB_NAME = V_SUB_NAME;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_SUB_DELETE이(가) 컴파일되었습니다.
+
+
+-- 교재 삭제 기능(관리자) : 정민화
+-- 교재명을 입력하면, 교재명을 삭제하거나, 교재명과 교재정보를 동시에 삭제한다.
+-- 삭제는 되지만, 백업은 되지 않고 관련 테이블에서도 NULL로 표기된다.
+CREATE OR REPLACE PROCEDURE PRC_BK_DELETE
+( V_BK_TITLE       IN TBL_BOOK.BK_CD%TYPE      -- EXEC 입력된 변경할 교재코드
+)
+IS
+BEGIN
+    -- 모두 삭제
+    DELETE                  -- 삭제
+    FROM TBL_BOOK           -- 교재 테이블에서
+    WHERE BK_TITLE = V_BK_TITLE;    -- 교재코드가 삭제할 교재코드와 같은 경우
+    
+    COMMIT;
+END;
+
+
+-- 과정 DELETE 프로시저 : 송수진
+CREATE OR REPLACE PROCEDURE PRC_CRS_DELETE
+( V_CRS_NAME    IN TBL_COURSE.CRS_NAME%TYPE
+)
+IS
+BEGIN
+    DELETE
+    FROM TBL_COURSE
+    WHERE CRS_NAME = V_CRS_NAME;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_CRS_DELETE이(가) 컴파일되었습니다.
+
+
+-- 강의실 정보 삭제 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_CLS_DELETE
+( V_CLS_CD IN TBL_CLASS.CLS_CD%TYPE)
+IS
+BEGIN
+    DELETE
+    FROM TBL_CLASS
+    WHERE CLS_CD = V_CLS_CD;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_CLS_DELETE이(가) 컴파일되었습니다.
+
+
+-----------------------------------------------------------------------------------------------
+-- 동적 테이블 INSERT 
+
+--개설 과목 등록 : 김태균
+CREATE OR REPLACE PROCEDURE PRC_OPSUB_INSERT
+( I_SUB_NAME IN TBL_SUBJECT.SUB_NAME%TYPE
+, I_BK_TITLE IN TBL_BOOK.BK_TITLE%TYPE
+, OPCRS_NO IN TBL_OPEN_CRS.OPCRS_NUM%TYPE
+, START_DATE VARCHAR2, END_DATE VARCHAR2)
+IS
+    SB_NO TBL_SUBJECT.SUB_CD%TYPE;
+    BK_NO TBL_BOOK.BK_CD%TYPE;
+BEGIN
+    SELECT SUB_CD INTO SB_NO
+    FROM TBL_SUBJECT
+    WHERE SUB_NAME = I_SUB_NAME;
+    
+    SELECT BK_CD INTO BK_NO
+    FROM TBL_BOOK
+    WHERE BK_TITLE = I_BK_TITLE;
+
+    INSERT INTO TBL_OPEN_SUB(OPSUB_NUM, SUB_CD, BK_CD, OPCRS_NUM, OPSUB_START, OPSUB_END) 
+    VALUES(SEQ_OPEN_SUB.NEXTVAL, SB_NO, BK_NO, OPCRS_NO, TO_DATE(START_DATE), TO_DATE(END_DATE));
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_OPSUB_INSERT이(가) 컴파일되었습니다.
+
+
+-- 개설과정 INSERT 프로시저 : 주한별, 정민화
+CREATE OR REPLACE PROCEDURE PRC_OPCRS_INSERT
+( V_OPCRS_START IN VARCHAR2 -- INSERT 구문에서 DATE 타입으로 변환
+, V_OPCRS_END   IN VARCHAR2
+, V_OPCRS_DATE  IN VARCHAR2
+
+-- 각 과정, 교수명, 강의실명 받아오기
+, V_CRS_NAME   IN TBL_COURSE.CRS_NAME%TYPE
+, V_PRO_NAME   IN TBL_PROFESSOR.PRO_NAME%TYPE
+, V_CLS_CD     IN TBL_CLASS.CLS_CD%TYPE
+)
+IS
+    V_CRS_CD    TBL_COURSE.CRS_CD%TYPE;
+    V_PRO_ID    TBL_PROFESSOR.PRO_ID%TYPE;
+    
+    -- EXCEPTION
+    USER_DEFINE_ERROR   EXCEPTION;
+BEGIN
+    -- 변수 담기(V_CRS_CD)
+    SELECT CRS_CD INTO V_CRS_CD
+    FROM TBL_COURSE
+    WHERE CRS_NAME = V_CRS_NAME;
+    
+    -- 변수 담기(V_PRO_ID)
+    SELECT PRO_ID INTO V_PRO_ID
+    FROM TBL_PROFESSOR
+    WHERE PRO_NAME = V_PRO_NAME;
+    
+    -- EXCEPTION 발생시키기
+    IF(TO_DATE('V_OPCRS_DATE','YYYY-MM-DD')>TO_DATE('V_OPCRS_START', 'YYYY-MM-DD'))
+    THEN RAISE USER_DEFINE_ERROR;
+    END IF;
+    
+    INSERT INTO TBL_OPEN_CRS(OPCRS_NUM,CRS_CD, PRO_ID, CLS_CD, OPCRS_START, OPCRS_END, OPCRS_DATE)
+    VALUES (SEQ_OPEN_CRS.NEXTVAL, V_CRS_CD, V_PRO_ID, V_CLS_CD
+          , TO_DATE('V_OPCRS_START', 'YYYY-MM-DD'),TO_DATE('V_OPCRS_END', 'YYYY-MM-DD'),TO_DATE('V_OPCRS_DATE','YYYY-MM-DD'));
+    
+    COMMIT;
+
+EXCEPTION
+        WHEN USER_DEFINE_ERROR 
+            THEN RAISE_APPLICATION_ERROR(-20004, 'ERROR : 과정 개설일이 과정 시작일 이후입니다.');
+        WHEN OTHERS
+            THEN ROLLBACK;
+
+END;
+--==>> Procedure PRC_OPCRS_INSERT이(가) 컴파일되었습니다.
+
+
+---------------------------------------------------------------------------------------------
+-- 동적 테이블 UPDATE 
+
+-- 개설과정_DATE UPDATE 프로시저 : 주한별
+CREATE OR REPLACE PROCEDURE PRC_OPCRS_UPDATE
+( V_CRS_NAME    IN TBL_COURSE.CRS_NAME%TYPE
+, V_PRO_ID      IN TBL_PROFESSOR.PRO_ID%TYPE
+, V_CLS_CD      IN TBL_CLASS.CLS_CD%TYPE
+, V_OPCRS_START VARCHAR2
+, V_OPCRS_END   VARCHAR2
+, V_OPCRS_DATE  VARCHAR2
+-- 판별을 위한 PK값
+, V_OPCRS_NUM   IN TBL_OPEN_CRS.OPCRS_NUM%TYPE
+)
+IS
+ V_CRS_CD   TBL_COURSE.CRS_CD%TYPE;
+ USER_DEFINE_ERROR EXCEPTION;
+BEGIN
+    -- 변수 채우기(V_CRS_CD)
+    SELECT CRS_CD INTO V_CRS_CD
+    FROM TBL_COURSE
+    WHERE CRS_NAME = V_CRS_NAME;
+    
+    -- EXCEPTION 발생시키기
+    IF(TO_DATE('V_OPCRS_DATE','YYYY-MM-DD')>TO_DATE('V_OPCRS_START', 'YYYY-MM-DD'))
+    THEN RAISE USER_DEFINE_ERROR;
+    END IF;
+    
+    UPDATE TBL_OPEN_CRS
+    SET CRS_CD = V_CRS_CD, PRO_ID = V_PRO_ID, CLS_CD = V_CRS_CD
+        , OPCRS_START =V_OPCRS_START, OPCRS_END = V_OPCRS_END, OPCRS_DATE = V_OPCRS_DATE
+    WHERE OPCRS_NUM = V_OPCRS_NUM;
+    
+    COMMIT;
+
+EXCEPTION
+        WHEN USER_DEFINE_ERROR 
+            THEN RAISE_APPLICATION_ERROR(-20004, 'ERROR : 과정 개설일이 과정 시작일 이후입니다.');
+        WHEN OTHERS
+            THEN ROLLBACK;
+END;
+
+
+
+--과목 성적 배점설정 (교수자) : 김태균
+CREATE OR REPLACE PROCEDURE PRC_OPSUB_UPRATE
+( OPSUB_NO IN TBL_OPEN_SUB.OPSUB_NUM%TYPE
+, I_ATD IN TBL_OPEN_SUB.ATD_RATE%TYPE
+, I_PRC IN TBL_OPEN_SUB.PRC_RATE%TYPE
+, I_WRT IN TBL_OPEN_SUB.WRT_RATE%TYPE)
+IS
+BEGIN
+    UPDATE TBL_OPEN_SUB
+    SET ATD_RATE = I_ATD, PRC_RATE = I_PRC, WRT_RATE = I_WRT
+    WHERE OPSUB_NUM = OPSUB_NO;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_OPSUB_UPRATE이(가) 컴파일되었습니다.
+
+
+-- 성적 수정 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_SCO_UPDATE
+( V_SCO_NUM IN TBL_SCORE.SCO_NUM%TYPE
+, V_SCO_ATD IN TBL_SCORE.SCO_ATD%TYPE
+, V_SCO_PRC IN TBL_SCORE.SCO_PRC%TYPE
+, V_SCO_WRT IN TBL_SCORE.SCO_WRT%TYPE
+)
+IS
+BEGIN
+    UPDATE TBL_SCORE
+    SET SCO_ATD = V_SCO_ATD, SCO_PRC = V_SCO_PRC, SCO_WRT = V_SCO_WRT
+    WHERE SCO_NUM = V_SCO_NUM;
+    
+    COMMIT;
+END;
+
+
+-----------------------------------------------------------------------------------------------
+-- 동적 테이블 DELETE
+
+--개설 과목 삭제 : 김태균
+CREATE OR REPLACE PROCEDURE PRC_OPSUB_DELETE
+(OPSUB_NO IN TBL_OPEN_SUB.OPSUB_NUM%TYPE)
+IS
+BEGIN
+    DELETE
+    FROM TBL_OPEN_SUB
+    WHERE OPSUB_NUM = OPSUB_NO;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_OPSUB_DELETE이(가) 컴파일되었습니다.
+
+-- 개설과정 삭제 기능(관리자) : 정민화
+CREATE OR REPLACE PROCEDURE PRC_OPCRS_DELETE
+( V_OPCRS_NUM       IN TBL_OPEN_CRS.OPCRS_NUM%TYPE      -- EXEC 입력된 삭제할 과정번호
+)
+IS
+BEGIN
+    -- 모두 삭제
+    DELETE                          -- 삭제
+    FROM TBL_OPEN_CRS               -- 개설과정 테이블에서
+    WHERE OPCRS_NUM=V_OPCRS_NUM;    -- 과정번호가 삭제할 과정번호와 같은 경우
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_OPCRS_DELETE이(가) 컴파일되었습니다.
+
+-- 성적 정보 삭제 : 강수경
+CREATE OR REPLACE PROCEDURE PRC_SCO_DELETE
+( V_SCO_NUM IN TBL_SCORE.SCO_NUM%TYPE)
+IS
+BEGIN
+    DELETE
+    FROM TBL_SCORE
+    WHERE SCO_NUM = V_SCO_NUM;
+    
+    COMMIT;
+END;
+--==>> Procedure PRC_SCO_DELETE이(가) 컴파일되었습니다.
+
+----------------------------------------------------------------------------------------------------
+
+-- 성적 INSERT 프로시저
+CREATE OR REPLACE PROCEDURE PRC_SCO_INSERT
+( V_REGI_NUM  IN TBL_CRSE_REGISTER.REGI_NUM%TYPE
+, V_OPSUB_NUM IN TBL_OPEN_SUB.OPSUB_NUM%TYPE
+, V_SCO_ATD NUMBER
+, V_SCO_PRC NUMBER
+, V_SCO_WRT NUMBER
+)
+IS
+    V_ATD_RATE TBL_OPEN_SUB.ATD_RATE%TYPE;
+    V_PRC_RATE TBL_OPEN_SUB.PRC_RATE%TYPE;
+    V_WRT_RATE TBL_OPEN_SUB.WRT_RATE%TYPE;
+    
+    USER_DEFINE_ERROR   EXCEPTION;
+    
+BEGIN
+
+    -- 개설과목의 배점정보 가져오기
+    SELECT ATD_RATE INTO V_ATD_RATE
+    FROM TBL_OPEN_SUB
+    WHERE OPSUB_NUM = V_OPSUB_NUM;
+    
+    SELECT PRC_RATE INTO V_PRC_RATE
+    FROM TBL_OPEN_SUB
+    WHERE OPSUB_NUM = V_OPSUB_NUM;
+    
+    SELECT WRT_RATE INTO V_WRT_RATE
+    FROM TBL_OPEN_SUB
+    WHERE OPSUB_NUM = V_OPSUB_NUM;
+    
+    -- 배점이하일때만 등록 가능
+    IF (V_SCO_ATD <= V_ATD_RATE AND V_SCO_PRC <= V_PRC_RATE AND V_SCO_WRT <= V_WRT_RATE)
+        THEN
+        INSERT INTO TBL_SCORE(SCO_NUM, REGI_NUM, OPSUB_NUM, SCO_ATD, SCO_PRC, SCO_WRT)
+        VALUES(SEQ_SCORE.NEXTVAL, V_REGI_NUM, V_OPSUB_NUM, V_SCO_ATD, V_SCO_PRC, V_SCO_WRT);
+    ELSE
+        RAISE USER_DEFINE_ERROR;    
+    END IF;
+    
+    
+    EXCEPTION
+        WHEN USER_DEFINE_ERROR
+            THEN RAISE_APPLICATION_ERROR(-20007, '입력점수가 배점기준을 벗어났습니다.'); 
+
+        WHEN OTHERS
+            THEN ROLLBACK;
+    
+END;
+
+
+
+
+---------------------------------------------------------------------------------------------------------------
+
+--모든 교수 조회
+/*
+CREATE VIEW VIEW_PROFESSOR
+AS
+SELECT *
+FROM TBL_PROFESSOR;
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
